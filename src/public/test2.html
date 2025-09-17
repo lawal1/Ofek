@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Copyright Analysis Tool</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #cc0000;
+        }
+
+        .btn-secondary {
+            background: #4285f4;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-secondary:hover {
+            background: #3367d6;
+        }
+
+        .results-container {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff0000;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e3f2fd;
+            border-radius: 8px;
+        }
+
+        .high-risk-section {
+            margin: 25px 0;
+            padding: 20px;
+            background: #ffebee;
+            border-radius: 8px;
+            border-left: 5px solid #f44336;
+        }
+
+        .high-risk-section h3 {
+            color: #f44336;
+            margin-bottom: 15px;
+        }
+
+        .video-item {
+            display: flex;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .video-thumbnail {
+            flex-shrink: 0;
+            margin-right: 15px;
+        }
+
+        .video-thumbnail img {
+            width: 120px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .video-info {
+            flex-grow: 1;
+        }
+
+        .video-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .channel-name {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .publish-date {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .rationale {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .rationale ul {
+            padding-left: 20px;
+        }
+
+        .video-link-container {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .video-link {
+            flex-grow: 1;
+            padding: 8px 12px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .copy-btn {
+            margin-left: 10px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .copy-btn:hover {
+            background: #3367d6;
+        }
+
+        .copy-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #4caf50;
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .mock-warning {
+            background: #fff8e1;
+            color: #ff6f00;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            .video-item {
+                flex-direction: column;
+            }
+            
+            .video-thumbnail {
+                margin-right: 0;
+                margin-bottom: 15px;
+                align-self: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>YouTube Copyright Analysis Tool</h1>
+            <p class="subtitle">Analyze YouTube channels for potential copyright violations</p>
+        </header>
+
+        <div class="card">
+            <h2>Enter Channel Information</h2>
+            <p>Provide details about the YouTube channel you want to analyze</p>
+            
+            <div class="error" id="errorMessage"></div>
+            
+            <form id="analysisForm">
+                <div class="form-group">
+                    <label for="userName">Your video Name</label>
+                    <input type="text" id="userName" placeholder="Your video Name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="channelName">Channel Name to Analyze</label>
+                    <input type="text" id="channelName" placeholder="Enter the channel name" required>
+                </div>
+                
+                <button type="submit">Analyze Channel</button>
+            </form>
+        </div>
+
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner"></div>
+            <p>Analyzing YouTube search results. This may take a minute...</p>
+        </div>
+
+        <div class="results-container" id="resultsContainer">
+            <div class="card">
+                <h2>Analysis Results</h2>
+                <p>Based on the top YouTube search results for channel: <span id="queryDisplay"></span></p>
+                
+                <div id="resultsSummary" class="summary">
+                    <h3>Summary</h3>
+                    <p id="summaryText"></p>
+                </div>
+                
+                <div class="high-risk-section">
+                    <h3>High Risk Videos</h3>
+                    <div id="highRiskVideos"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="copy-notification" id="copyNotification">Link copied to clipboard!</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('analysisForm');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const errorMessage = document.getElementById('errorMessage');
+            const queryDisplay = document.getElementById('queryDisplay');
+            const summaryText = document.getElementById('summaryText');
+            const highRiskVideos = document.getElementById('highRiskVideos');
+            const copyNotification = document.getElementById('copyNotification');
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Get form values
+                const userName = document.getElementById('userName').value;
+                const channelName = document.getElementById('channelName').value;
+                
+                // Validate inputs
+                if (!userName || !channelName) {
+                    showError('Please fill in all fields');
+                    return;
+                }
+                
+                // Hide any previous errors and results
+                hideError();
+                resultsContainer.style.display = 'none';
+                
+                // Show loading indicator
+                loadingIndicator.style.display = 'block';
+                
+                try {
+                    // Send request to backend
+                    const response = await fetch('/analyze', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ userName, channelName })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Something went wrong');
+                    }
+                    
+                    // Display the results
+                    displayResults(data);
+                    
+                } catch (error) {
+                    showError('An error occurred during analysis: ' + error.message);
+                } finally {
+                    loadingIndicator.style.display = 'none';
+                }
+            });
+            
+            function displayResults(results) {
+                // Update query display
+                queryDisplay.textContent = results.query;
+                
+                // Update summary
+                summaryText.textContent = results.analysis.summary;
+                
+                // Display high-risk videos only
+                highRiskVideos.innerHTML = '';
+                
+                const highRiskVideosList = results.analysis.ranked_list.filter(video => 
+                    video.risk === 'High' || 'Medium'
+                );
+                
+                if (highRiskVideosList.length === 0) {
+                    highRiskVideos.innerHTML = '<p>No high-risk videos found.</p>';
+                } else {
+                    highRiskVideosList.forEach(video => {
+                        const videoUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
+                        
+                        const videoElement = document.createElement('div');
+                        videoElement.className = 'video-item';
+                        videoElement.innerHTML = `
+                            <div class="video-thumbnail">
+                                <img src="https://i.ytimg.com/vi/${video.videoId}/default.jpg" alt="${video.title}">
+                            </div>
+                            <div class="video-info">
+                                <div class="video-title">${video.title}</div>
+                                <div class="channel-name">Channel: ${video.channelTitle}</div>
+                                <div class="publish-date">Published: ${new Date(video.publishedAt).toLocaleDateString()}</div>
+                                <div class="rationale">
+                                    <strong>Rationale:</strong>
+                                    <ul>
+                                        ${video.rationale.map(point => `<li>${point}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                <div class="video-link-container">
+                                    <input type="text" class="video-link" value="${videoUrl}" readonly>
+                                    <button class="copy-btn" data-url="${videoUrl}">Copy Link</button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        highRiskVideos.appendChild(videoElement);
+                    });
+                    
+                    // Add event listeners to copy buttons
+                    document.querySelectorAll('.copy-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const url = this.getAttribute('data-url');
+                            copyToClipboard(url);
+                            
+                            // Show notification
+                            copyNotification.style.display = 'block';
+                            setTimeout(() => {
+                                copyNotification.style.display = 'none';
+                            }, 2000);
+                        });
+                    });
+                }
+                
+                // Show results container
+                resultsContainer.style.display = 'block';
+            }
+            
+            function copyToClipboard(text) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+            
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+            }
+            
+            function hideError() {
+                errorMessage.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

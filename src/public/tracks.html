@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OFEK - All Tracks</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        body {
+            background-color: #fdf2f0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            transition: margin-left 0.3s ease;
+        }
+
+        .sidebar {
+            background-color: #fdf2f0;
+            min-height: 100vh;
+            width: 250px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 20px;
+            border-right: 1px solid #f0e6e3;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e55a3c;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-sidebar {
+            display: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .nav-item {
+            margin-bottom: 10px;
+        }
+
+        .nav-item.active {
+            background-color: #e55a3c;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .nav-item:not(.active) {
+            padding: 12px 20px;
+            color: #666;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-item:not(.active):hover {
+            background-color: #f5e8e5;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 40px;
+            min-height: 100vh;
+            background-color: white;
+            transition: margin-left 0.3s ease;
+        }
+
+        .user-icon {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #e55a3c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #e55a3c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1002;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        /* Page Header Styles */
+        .page-header {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #e55a3c;
+            margin-bottom: 10px;
+        }
+
+        .page-subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .new-track-btn {
+            background-color: #e55a3c;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .new-track-btn:hover {
+            background-color: #d4442a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(229, 90, 60, 0.3);
+            color: white;
+        }
+
+        /* Table Styles */
+        .tracks-table-container {
+            background-color: #fdf2f0;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow-x: auto;
+            min-height: 400px;
+            position: relative;
+        }
+
+        .tracks-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .tracks-table th {
+            text-align: left;
+            padding: 15px;
+            background-color: #e55a3c;
+            color: white;
+            font-weight: 600;
+        }
+
+        .tracks-table td {
+            padding: 15px;
+            border-bottom: 1px solid #f0e6e3;
+        }
+
+        .tracks-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .tracks-table tr:hover {
+            background-color: #faf0ed;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .risk-high {
+            background-color: #ffebee;
+            color: #f44336;
+        }
+
+        .risk-medium {
+            background-color: #fff8e1;
+            color: #ff6f00;
+        }
+
+        .risk-low {
+            background-color: #e6f7ee;
+            color: #2e7d52;
+        }
+
+        .view-btn {
+            background-color: #4285f4;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .view-btn:hover {
+            background-color: #3367d6;
+        }
+
+        .no-tracks {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .no-tracks-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #d2c0ac;
+        }
+
+        /* Loader Styles */
+        .loader-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(253, 242, 240, 0.8);
+            z-index: 10;
+            border-radius: 12px;
+        }
+
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #e55a3c;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 15px;
+            text-align: center;
+            color: #e55a3c;
+            font-weight: 500;
+        }
+
+        /* Modal Styles */
+        .track-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .track-modal-content {
+            background-color: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .track-modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #f0e6e3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .track-modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e55a3c;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .track-modal-body {
+            padding: 25px;
+        }
+
+        .track-info {
+            margin-bottom: 25px;
+        }
+
+        .track-info-item {
+            display: flex;
+            margin-bottom: 15px;
+        }
+
+        .track-info-label {
+            font-weight: 600;
+            min-width: 150px;
+            color: #333;
+        }
+
+        .track-info-value {
+            color: #666;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .close-sidebar {
+                display: block;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+            
+            .menu-toggle {
+                display: flex;
+            }
+            
+            .overlay.active {
+                display: block;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .new-track-btn {
+                margin-top: 15px;
+            }
+            
+            .tracks-table {
+                min-width: 600px;
+            }
+            
+            .track-info-item {
+                flex-direction: column;
+            }
+            
+            .track-info-label {
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Overlay for mobile when sidebar is open -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Track Detail Modal -->
+    <div class="track-modal" id="trackModal">
+        <div class="track-modal-content">
+            <div class="track-modal-header">
+                <h2 class="track-modal-title" id="modalTrackName">Track Details</h2>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <div class="track-modal-body" id="modalBody">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu Toggle Button for Mobile -->
+    <div class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="brand">
+            <span>.</span>
+            <span class="close-sidebar" id="closeSidebar">
+                <i class="fas fa-times"></i>
+            </span>
+        </div>
+        <div class="nav-item" onclick="window.location.href='dashboard.html'">Dashboard</div>
+        <div class="nav-item" onclick="window.location.href='newtrack.html'">New Track</div>
+        <div class="nav-item active">All Tracks</div>
+        <div class="nav-item" onclick="window.location.href='profile.html'">Profile</div>
+        <div class="nav-item" id="logoutBtn">Logout</div>
+    </div>
+
+    <!-- User Icon -->
+    <div class="user-icon" id="userIcon">A</div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">All Tracks</h1>
+                <p class="page-subtitle">View and manage your copyright analysis tracks</p>
+            </div>
+            <a href="newtrack.html" class="new-track-btn">
+                <i class="fas fa-plus"></i> New Track
+            </a>
+        </div>
+        
+        <div class="tracks-table-container">
+            <!-- Loader Container -->
+            <div class="loader-container" id="loaderContainer">
+                <div>
+                    <div class="loader"></div>
+                    <div class="loading-text">Loading your tracks...</div>
+                </div>
+            </div>
+            
+            <table class="tracks-table">
+                <thead>
+                    <tr>
+                        <th>Track Name</th>
+                        <th>Your Video</th>
+                        <th>Channel Analyzed</th>
+                        <th>Infringements</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tracksTableBody">
+                    <!-- Content will be populated by JavaScript -->
+                </tbody>
+            </table>
+            
+            <div class="no-tracks" id="noTracksMessage" style="display: none;">
+                <div class="no-tracks-icon">
+                    <i class="fas fa-music"></i>
+                </div>
+                <h3>No Tracks Found</h3>
+                <p>You haven't created any tracks yet. Start by creating a new track analysis.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhlC-1LJYn4De0fL3iJhwtDWRzDpCwXaY",
+            authDomain: "vouchcard-46e48.firebaseapp.com",
+            databaseURL: "https://vouchcard-46e48-default-rtdb.firebaseio.com",
+            projectId: "vouchcard-46e48",
+            storageBucket: "vouchcard-46e48.firebasestorage.app",
+            messagingSenderId: "951045666666",
+            appId: "1:951045666666:web:35a4808d943ae311565713",
+            measurementId: "G-0PDX1RFQ02"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // Global variables
+        let currentUser = null;
+        let userTracks = [];
+
+        // Check authentication state
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                // User is not signed in, redirect to signin page
+                window.location.href = 'signin.html';
+            } else {
+                currentUser = user;
+                
+                // Update user icon with first letter of email
+                const userIcon = document.getElementById('userIcon');
+                const firstLetter = user.email ? user.email.charAt(0).toUpperCase() : 'U';
+                userIcon.textContent = firstLetter;
+                
+                // Show loader while loading tracks
+                document.getElementById('loaderContainer').style.display = 'flex';
+                
+                // Load user's tracks
+                loadUserTracks(user.uid);
+            }
+        });
+
+        // Function to load user tracks
+        function loadUserTracks(uid) {
+            database.ref('users/' + uid + '/tracks').once('value')
+                .then((snapshot) => {
+                    userTracks = [];
+                    const tracksTableBody = document.getElementById('tracksTableBody');
+                    tracksTableBody.innerHTML = '';
+                    
+                    // Hide loader
+                    document.getElementById('loaderContainer').style.display = 'none';
+                    
+                    if (snapshot.exists()) {
+                        snapshot.forEach((childSnapshot) => {
+                            const track = childSnapshot.val();
+                            track.id = childSnapshot.key;
+                            userTracks.push(track);
+                            
+                            // Count high and medium risk videos
+                            const infringementCount = track.analysis && track.analysis.ranked_list 
+                                ? track.analysis.ranked_list.filter(video => 
+                                    video.risk === 'High' || video.risk === 'Medium').length 
+                                : 0;
+                            
+                            // Format date
+                            const date = track.timestamp ? new Date(track.timestamp).toLocaleDateString() : 'N/A';
+                            
+                            // Create table row
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${track.trackName || 'Unnamed Track'}</td>
+                                <td>${track.userName || 'N/A'}</td>
+                                <td>${track.channelName || 'N/A'}</td>
+                                <td>
+                                    <span class="risk-badge ${infringementCount > 0 ? 'risk-high' : 'risk-low'}">
+                                        ${infringementCount} infringement${infringementCount !== 1 ? 's' : ''}
+                                    </span>
+                                </td>
+                                <td>${date}</td>
+                                <td>
+                                    <button class="view-btn" data-id="${track.id}">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </td>
+                            `;
+                            
+                            tracksTableBody.appendChild(row);
+                        });
+                        
+                        document.getElementById('noTracksMessage').style.display = 'none';
+                    } else {
+                        document.getElementById('noTracksMessage').style.display = 'block';
+                    }
+                    
+                    // Add event listeners to view buttons
+                    document.querySelectorAll('.view-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const trackId = this.getAttribute('data-id');
+                            showTrackDetails(trackId);
+                        });
+                    });
+                })
+                .catch((error) => {
+                    console.error('Error loading tracks:', error);
+                    // Hide loader and show error
+                    document.getElementById('loaderContainer').style.display = 'none';
+                    document.getElementById('noTracksMessage').style.display = 'block';
+                    document.getElementById('noTracksMessage').innerHTML = `
+                        <div class="no-tracks-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3>Error Loading Tracks</h3>
+                        <p>There was a problem loading your tracks. Please try again later.</p>
+                    `;
+                });
+        }
+
+        // Function to show track details in modal
+        function showTrackDetails(trackId) {
+            const track = userTracks.find(t => t.id === trackId);
+            if (!track) return;
+            
+            // Set modal title
+            document.getElementById('modalTrackName').textContent = track.trackName || 'Track Details';
+            
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = '';
+            
+            // Create track info section
+            const trackInfo = document.createElement('div');
+            trackInfo.className = 'track-info';
+            trackInfo.innerHTML = `
+                <div class="track-info-item">
+                    <div class="track-info-label">Your Video:</div>
+                    <div class="track-info-value">${track.userName || 'N/A'}</div>
+                </div>
+                <div class="track-info-item">
+                    <div class="track-info-label">Channel Analyzed:</div>
+                    <div class="track-info-value">${track.channelName || 'N/A'}</div>
+                </div>
+                <div class="track-info-item">
+                    <div class="track-info-label">Analysis Date:</div>
+                    <div class="track-info-value">${track.timestamp ? new Date(track.timestamp).toLocaleDateString() : 'N/A'}</div>
+                </div>
+            `;
+            modalBody.appendChild(trackInfo);
+            
+            // Create results section if analysis data exists
+            if (track.analysis) {
+                const resultsSection = document.createElement('div');
+                resultsSection.innerHTML = `
+                    <h3>Analysis Results</h3>
+                    <p>${track.analysis.summary || 'No summary available.'}</p>
+                `;
+                modalBody.appendChild(resultsSection);
+                
+                // Show high-risk videos if available
+                if (track.analysis.ranked_list && track.analysis.ranked_list.length > 0) {
+                    const highRiskVideos = track.analysis.ranked_list.filter(video => 
+                        video.risk === 'High' || video.risk === 'Medium'
+                    );
+                    
+                    if (highRiskVideos.length > 0) {
+                        const highRiskSection = document.createElement('div');
+                        highRiskSection.className = 'high-risk-section';
+                        highRiskSection.innerHTML = `
+                            <h3>High Risk Videos (${highRiskVideos.length})</h3>
+                            <div class="high-risk-videos"></div>
+                        `;
+                        modalBody.appendChild(highRiskSection);
+                        
+                        const highRiskVideosContainer = highRiskSection.querySelector('.high-risk-videos');
+                        
+                        highRiskVideos.forEach(video => {
+                            const videoUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
+                            
+                            const videoElement = document.createElement('div');
+                            videoElement.className = 'video-item';
+                            videoElement.innerHTML = `
+                                <div class="video-thumbnail">
+                                    <img src="https://i.ytimg.com/vi/${video.videoId}/default.jpg" alt="${video.title}">
+                                </div>
+                                <div class="video-info">
+                                    <div class="video-title">${video.title}</div>
+                                    <div class="channel-name">Channel: ${video.channelTitle}</div>
+                                    <div class="publish-date">Published: ${new Date(video.publishedAt).toLocaleDateString()}</div>
+                                    <div class="rationale">
+                                        <strong>Rationale:</strong>
+                                        <ul>
+                                            ${video.rationale.map(point => `<li>${point}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                    <div class="video-link-container">
+                                        <input type="text" class="video-link" value="${videoUrl}" readonly>
+                                        <button class="copy-btn" data-url="${videoUrl}">Copy Link</button>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            highRiskVideosContainer.appendChild(videoElement);
+                        });
+                        
+                        // Add event listeners to copy buttons
+                        modalBody.querySelectorAll('.copy-btn').forEach(button => {
+                            button.addEventListener('click', function() {
+                                const url = this.getAttribute('data-url');
+                                copyToClipboard(url);
+                                alert('Link copied to clipboard!');
+                            });
+                        });
+                    }
+                }
+            } else {
+                const noDataMessage = document.createElement('p');
+                noDataMessage.textContent = 'No analysis data available for this track.';
+                modalBody.appendChild(noDataMessage);
+            }
+            
+            // Show the modal
+            document.getElementById('trackModal').style.display = 'flex';
+        }
+
+        // Function to copy text to clipboard
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+
+        // Close modal when close button is clicked
+        document.getElementById('closeModal').addEventListener('click', function() {
+            document.getElementById('trackModal').style.display = 'none';
+        });
+
+        // Close modal when clicking outside the modal content
+        document.getElementById('trackModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                document.getElementById('trackModal').style.display = 'none';
+            }
+        });
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            auth.signOut()
+                .then(() => {
+                    window.location.href = 'signin.html';
+                })
+                .catch((error) => {
+                    console.error('Error signing out:', error);
+                });
+        });
+
+        // Mobile sidebar functionality
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        const closeSidebarBtn = document.getElementById('closeSidebar');
+        const overlay = document.getElementById('overlay');
+        
+        function openSidebar() {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling when sidebar is open
+        }
+        
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = ''; // Re-enable scrolling
+        }
+        
+        menuToggle.addEventListener('click', openSidebar);
+        closeSidebarBtn.addEventListener('click', closeSidebar);
+        overlay.addEventListener('click', closeSidebar);
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (event) => {
+            if (window.innerWidth <= 768 && 
+                sidebar.classList.contains('active') && 
+                !sidebar.contains(event.target) && 
+                !menuToggle.contains(event.target)) {
+                closeSidebar();
+            }
+        });
+        
+        // Close sidebar on escape key press
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                if (window.innerWidth <= 768 && sidebar.classList.contains('active')) {
+                    closeSidebar();
+                }
+                if (document.getElementById('trackModal').style.display === 'flex') {
+                    document.getElementById('trackModal').style.display = 'none';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
