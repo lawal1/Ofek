@@ -723,7 +723,7 @@
                         </div>
                         <div class="video-info">
                             <div class="video-title">${video.title}</div>
-                            <div class="channel-name">${([video.channelTitle, video.channel].filter(v => v != null && v !== '').join(' ') || '') ? 'Channel: ' + [video.channelTitle, video.channel].filter(v => v != null && v !== '').join(' ') : ''}</div>
+                            <div class="channel-name">${([video.channelTitle, video.channel,  video.channelName].filter(v => v != null && v !== '').join(' ') || '') ? 'Channel: ' + [video.channelTitle, video.channel].filter(v => v != null && v !== '').join(' ') : ''}</div>
                             <div class="publish-date">Published: ${new Date(video.publishedAt).toLocaleDateString()}</div>
                             <div class="rationale">
                                 <strong>Rationale:</strong>
