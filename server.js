@@ -323,7 +323,7 @@ app.post('/analyze', async (req, res) => {
     let allSearchResults = [];
     let nextPageToken = null;
     let pageCount = 0;
-    const targetResults = 80;
+    const targetResults = 50;
     const maxResultsPerPage = 50; // YouTube API max per page
 
     try {
