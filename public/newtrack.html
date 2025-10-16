@@ -486,7 +486,7 @@
 
         <div class="loading" id="loadingIndicator">
             <div class="spinner"></div>
-            <p>Dont Not reload or close brouser app. Analyzing hundreds videos and contents on youtube this might take about 5 minute. </p>
+            <p>Dont Not reload or close brouser app. Analyzing hundreds videos and contents on youtube this might take about 3 minutes. </p>
         </div>
 
         <div class="results-container" id="resultsContainer">
@@ -705,7 +705,7 @@
             highRiskVideos.innerHTML = '';
             
             const highRiskVideosList = results.analysis.ranked_list.filter(video => 
-                video.risk === 'High' || video.risk === 'Medium'
+                video.risk === 'High'
             );
             
             if (highRiskVideosList.length === 0) {
