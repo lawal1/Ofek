@@ -323,7 +323,7 @@ app.post('/analyze', async (req, res) => {
     let allSearchResults = [];
     let nextPageToken = null;
     let pageCount = 0;
-    const targetResults = 100;
+    const targetResults = 200;
     const maxResultsPerPage = 50; // YouTube API max per page
 
     try {
@@ -597,7 +597,7 @@ function combineAnalyses(analyses, totalVideos) {
   const totalLowRisk = allRankedLists.filter(item => item.risk === 'Low').length;
   
   const failedBatches = analyses.filter(a => a.batch_failed).length;
-  const summary = `Analyzed ${totalVideos} videos across ${analyses.length} batches${failedBatches > 0 ? ` (${failedBatches} batches failed)` : ''}. Found ${totalHighRisk} high-risk, ${totalMediumRisk} medium-risk, and ${totalLowRisk} low-risk videos. ${totalHighRisk > 0 ? 'Immediate attention recommended for high-risk content.' : 'No immediate high-risk concerns detected.'}`;
+  const summary = ` We found ${totalHighRisk + totalMediumRisk} Movies with Possible infrigment. Immediate attention recommended for high-risk content.' : 'No immediate high-risk concerns detected.'}`;
 
   // Sort combined ranked list by risk priority (High > Medium > Low)
   const riskPriority = { High: 3, Medium: 2, Low: 1 };
