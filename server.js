@@ -319,20 +319,60 @@ app.post('/analyze', async (req, res) => {
       return res.json(mockResults);
     }
 
-    // Step 1: Search for videos using YouTube Data API - get 100 results
-    let searchResponse;
+    // Step 1: Search for videos using YouTube Data API with pagination
+    let allSearchResults = [];
+    let nextPageToken = null;
+    let pageCount = 0;
+    const targetResults = 100;
+    const maxResultsPerPage = 50; // YouTube API max per page
+
     try {
-      console.log('Fetching YouTube search results...');
-      searchResponse = await axios.get('https://www.googleapis.com/youtube/v3/search', {
-        params: {
-          part: 'snippet',
-          q: `${userName} `,
-          type: 'video',
-          maxResults: 100,
-          key: process.env.YOUTUBE_API_KEY
+      console.log('Fetching YouTube search results with pagination...');
+      
+      do {
+        pageCount++;
+        console.log(`[PAGE ${pageCount}] Fetching page ${pageCount}...`);
+        
+        const searchResponse = await axios.get('https://www.googleapis.com/youtube/v3/search', {
+          params: {
+            part: 'snippet',
+            q: `${userName} ${channelName}`,
+            type: 'video',
+            maxResults: Math.min(maxResultsPerPage, targetResults - allSearchResults.length),
+            pageToken: nextPageToken,
+            key: process.env.YOUTUBE_API_KEY
+          }
+        });
+
+        // Process items from this page
+        const pageResults = searchResponse.data.items.map(item => ({
+          videoId: item.id.videoId,
+          title: item.snippet.title,
+          description: item.snippet.description,
+          channelTitle: item.snippet.channelTitle,
+          channelId: item.snippet.channelId,
+          publishedAt: item.snippet.publishedAt,
+          thumbnails: item.snippet.thumbnails,
+          publishTime: item.snippet.publishTime
+        }));
+
+        allSearchResults = allSearchResults.concat(pageResults);
+        nextPageToken = searchResponse.data.nextPageToken;
+        
+        console.log(`[PAGE ${pageCount}] Retrieved ${pageResults.length} videos (Total: ${allSearchResults.length})`);
+        
+        // Break if we've reached our target or there are no more pages
+        if (allSearchResults.length >= targetResults || !nextPageToken) {
+          break;
         }
-      });
-      console.log(`YouTube API success: Found ${searchResponse.data.items.length} videos`);
+
+        // Add delay between requests to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+      } while (allSearchResults.length < targetResults && nextPageToken);
+
+      console.log(`YouTube API success: Retrieved ${allSearchResults.length} videos across ${pageCount} pages`);
+
     } catch (youtubeError) {
       console.error('YouTube API Error:', youtubeError.message);
       if (youtubeError.response) {
@@ -343,25 +383,13 @@ app.post('/analyze', async (req, res) => {
       });
     }
 
-    if (searchResponse.data.items.length === 0) {
+    if (allSearchResults.length === 0) {
       console.log('No videos found for search query');
       return res.status(404).json({ error: 'No videos found for this channel' });
     }
 
-    // Prepare all search results
-    const allSearchResults = searchResponse.data.items.map(item => ({
-      videoId: item.id.videoId,
-      title: item.snippet.title,
-      description: item.snippet.description,
-      channelTitle: item.snippet.channelTitle,
-      channelId: item.snippet.channelId,
-      publishedAt: item.snippet.publishedAt,
-      thumbnails: item.snippet.thumbnails,
-      publishTime: item.snippet.publishTime
-    }));
-
     // Function to analyze a batch of videos
-    const analyzeBatch = async (batchResults, batchNumber) => {
+    const analyzeBatch = async (batchResults, batchNumber, totalBatches) => {
       const prompt = `
         SYSTEM:
         You are an expert copyright-risk analyst AI for online video platforms. You do NOT make legal determinations — instead you score and prioritize videos for likely copyright infringement using explicit heuristics and provide practical verification steps and next actions for a rights holder or reviewer.
@@ -435,7 +463,7 @@ app.post('/analyze', async (req, res) => {
         - When in doubt, mark Medium and include a short note on what to check to escalate to High.
         - Keep responses short; include no more than 6 top-priority items.
 
-        Here are the search results to analyze (Batch ${batchNumber}):
+        Here are the search results to analyze (Batch ${batchNumber} of ${totalBatches}):
         ${JSON.stringify(batchResults, null, 2)}
 
         Please provide your analysis in the specified JSON format.
@@ -460,7 +488,7 @@ app.post('/analyze', async (req, res) => {
     const failedBatches = [];
     const totalBatches = Math.ceil(allSearchResults.length / batchSize);
     
-    console.log(`Starting batch analysis: ${totalBatches} batches of ${batchSize} videos each`);
+    console.log(`Starting batch analysis: ${totalBatches} batches of ${batchSize} videos each (Total: ${allSearchResults.length} videos)`);
 
     for (let i = 0; i < allSearchResults.length; i += batchSize) {
       const batchNumber = Math.floor(i / batchSize) + 1;
@@ -469,7 +497,7 @@ app.post('/analyze', async (req, res) => {
       console.log(`[BATCH ${batchNumber}/${totalBatches}] Analyzing ${batch.length} videos...`);
       
       try {
-        const batchAnalysis = await analyzeBatch(batch, batchNumber);
+        const batchAnalysis = await analyzeBatch(batch, batchNumber, totalBatches);
         allAnalyses.push(batchAnalysis);
         console.log(`[BATCH ${batchNumber}/${totalBatches}] ✅ Analysis completed successfully`);
         
@@ -597,12 +625,12 @@ function generateMockResults(userName, channelName) {
   
   const searchResults = [];
   
-  // Generate 100 mock results instead of 5
+  // Generate 100 mock results with pagination simulation
   for (let i = 1; i <= 100; i++) {
     searchResults.push({
       videoId: `mock_video_${i}`,
-      title: `${channelName} - Video ${i}`,
-      description: `This is a description for ${channelName} video ${i}`,
+      title: `${userName} - ${channelName} Content ${i}`,
+      description: `This is a description for ${userName} ${channelName} video ${i}`,
       channelTitle: i % 5 === 0 ? channelName : `Other Channel ${i}`,
       channelId: `channel_${i}`,
       publishedAt: new Date(Date.now() - i * 86400000).toISOString(),
@@ -619,7 +647,7 @@ function generateMockResults(userName, channelName) {
 
   // Mock analysis for 100 videos (simplified)
   const analysis = {
-    summary: `Based on the search results for "${channelName}", we analyzed 100 videos across 10 batches. Found 15 high-risk, 25 medium-risk, and 60 low-risk videos. Immediate attention recommended for high-risk content.`,
+    summary: `Based on the search results for "${userName} ${channelName}", we analyzed 100 videos across 10 batches. Found 15 high-risk, 25 medium-risk, and 60 low-risk videos. Immediate attention recommended for high-risk content.`,
     ranked_list: searchResults.slice(0, 20).map((result, index) => ({
       videoId: result.videoId,
       title: result.title,
