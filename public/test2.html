@@ -3,112 +3,282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Copyright Analysis Tool</title>
+    <title>OFEK - New Track Analysis</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- Paystack Inline -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
+        /* Previous CSS styles remain the same */
+        body {
+            background-color: #fdf2f0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: margin-left 0.3s ease;
         }
 
-        body {
-            background-color: #f5f5f5;
-            color: #333;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        .sidebar {
+            background-color: #fdf2f0;
+            min-height: 100vh;
+            width: 250px;
+            position: fixed;
+            left: 0;
+            top: 0;
             padding: 20px;
+            border-right: 1px solid #f0e6e3;
+            z-index: 1000;
+            transition: transform 0.3s ease;
         }
 
-        header {
-            text-align: center;
-            padding: 20px 0;
-            background: linear-gradient(135deg, #ff0000, #cc0000);
-            color: white;
-            border-radius: 8px;
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e55a3c;
             margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        h1 {
-            font-size: 2.5rem;
+        .close-sidebar {
+            display: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .nav-item {
             margin-bottom: 10px;
         }
 
-        .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
+        .nav-item.active {
+            background-color: #e55a3c;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
         }
 
-        .card {
-            background: white;
+        .nav-item:not(.active) {
+            padding: 12px 20px;
+            color: #666;
+            cursor: pointer;
             border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-item:not(.active):hover {
+            background-color: #f5e8e5;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 40px;
+            min-height: 100vh;
+            background-color: white;
+            transition: margin-left 0.3s ease;
+        }
+
+        .user-icon {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #e55a3c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #e55a3c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1002;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        /* Form Styles */
+        .form-header {
+            margin-bottom: 30px;
+        }
+
+        .form-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #e55a3c;
+            margin-bottom: 10px;
+        }
+
+        .form-subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .form-card {
+            background-color: #fdf2f0;
+            border-radius: 12px;
             padding: 25px;
             margin-bottom: 25px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
         .form-group {
             margin-bottom: 20px;
         }
 
-        label {
+        .form-group label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
+            color: #333;
         }
 
-        input, textarea {
+        .form-group input {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 12px 15px;
+            border: 2px solid #d2c0ac;
+            border-radius: 8px;
             font-size: 16px;
+            transition: border-color 0.3s;
         }
 
-        button {
-            background: #ff0000;
-            color: white;
+        .form-group input:focus {
+            border-color: #e55a3c;
+            outline: none;
+        }
+
+        .form-btn {
+            background-color: #e55a3c;
             border: none;
-            padding: 12px 24px;
-            border-radius: 4px;
-            cursor: pointer;
+            padding: 12px 25px;
+            border-radius: 8px;
+            color: white;
             font-size: 16px;
-            font-weight: 600;
-            transition: background 0.3s;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        button:hover {
-            background: #cc0000;
+        .form-btn:hover {
+            background-color: #d4442a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(229, 90, 60, 0.3);
         }
 
-        .btn-secondary {
-            background: #4285f4;
-            padding: 8px 16px;
-            font-size: 14px;
+        .form-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
-        .btn-secondary:hover {
-            background: #3367d6;
-        }
-
-        .results-container {
-            display: none;
-        }
-
+        /* Loading Slideshow Styles */
         .loading {
             text-align: center;
             padding: 40px;
             display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading.visible {
+            opacity: 1;
+        }
+
+        .loading-slideshow {
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            min-height: 200px;
+        }
+
+        .loading-slide {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .loading-slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .slide-indicators {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .slide-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ddd;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .slide-indicator.active {
+            background-color: #e55a3c;
+        }
+
+        .slide-content {
+            margin-bottom: 20px;
+        }
+
+        .slide-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e55a3c;
+            margin-bottom: 15px;
+        }
+
+        .slide-text {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.5;
         }
 
         .spinner {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #ff0000;
+            border-top: 4px solid #e55a3c;
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -119,6 +289,18 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        /* Results Styles */
+        .results-container {
+            display: none;
+            margin-top: 30px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .results-container.visible {
+            opacity: 1;
         }
 
         .summary {
@@ -248,25 +430,85 @@
             display: none;
         }
 
-        .mock-warning {
-            background: #fff8e1;
-            color: #ff6f00;
+        .success-message {
+            background: #e6f7ee;
+            color: #2e7d52;
             padding: 15px;
             border-radius: 4px;
             margin-bottom: 20px;
+            display: none;
+        }
+
+        .new-analysis-btn {
+            background-color: #4285f4;
+            margin-top: 20px;
+        }
+
+        .new-analysis-btn:hover {
+            background-color: #3367d6;
+        }
+
+        /* Subscription Styles */
+        .subscription-prompt {
+            background: #fff8e1;
+            border: 1px solid #ffd54f;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .subscription-prompt h4 {
+            color: #f57c00;
+            margin-bottom: 15px;
+        }
+
+        .subscription-prompt p {
+            margin-bottom: 15px;
+            color: #5d4037;
+        }
+
+        .paystack-btn {
+            background-color: #00b894;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .paystack-btn:hover {
+            background-color: #00a085;
         }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 15px;
+            .sidebar {
+                transform: translateX(-100%);
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
             }
             
-            h1 {
-                font-size: 2rem;
+            .sidebar.active {
+                transform: translateX(0);
             }
             
-            .card {
-                padding: 15px;
+            .close-sidebar {
+                display: block;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+            
+            .menu-toggle {
+                display: flex;
+            }
+            
+            .overlay.active {
+                display: block;
             }
             
             .video-item {
@@ -282,51 +524,129 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>YouTube Copyright Analysis Tool</h1>
-            <p class="subtitle">Analyze YouTube channels for potential copyright violations</p>
-        </header>
+    <!-- Overlay for mobile when sidebar is open -->
+    <div class="overlay" id="overlay"></div>
 
-        <div class="card">
-            <h2>Enter Channel Information</h2>
-            <p>Provide details about the YouTube channel you want to analyze</p>
-            
-            <div class="error" id="errorMessage"></div>
-            
-            <form id="analysisForm">
+    <!-- Menu Toggle Button for Mobile -->
+    <div class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="brand">
+            <span>.</span>
+            <span class="close-sidebar" id="closeSidebar">
+                <i class="fas fa-times"></i>
+            </span>
+        </div>
+        <div class="nav-item" onclick="window.location.href='dashboard.html'">Dashboard</div>
+       <a  style="text-decoration: none;" href="newtrack.html"><div class="nav-item active">New Track</div></a>
+         <a  style="text-decoration: none;" href="tracks.html"><div class="nav-item">Tracks</div></a>
+        <a  style="text-decoration: none;" href="profile.html"><div class="nav-item">Profile</div></a>
+        <div class="nav-item" id="logoutBtn">Logout</div>
+    </div>
+
+    <!-- User Icon -->
+    <div class="user-icon" id="userIcon">A</div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="form-header">
+            <h1 class="form-title">New Track Analysis</h1>
+            <p class="form-subtitle">Analyze YouTube channels for potential copyright violations of your content</p>
+        </div>
+        
+        <!-- Status Messages -->
+        <div class="error" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+        
+        <div class="form-card" id="formCard">
+            <form id="trackForm">
                 <div class="form-group">
-                    <label for="userName">Your video Name</label>
-                    <input type="text" id="userName" placeholder="Your video Name" required>
+                    <label for="trackName">Track Name</label>
+                    <input type="text" id="trackName" placeholder="Enter a name for this track" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="userName">Your Video Name</label>
+                    <input type="text" id="userName" placeholder="Enter the name of your original video" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="channelName">Channel Name to Analyze</label>
-                    <input type="text" id="channelName" placeholder="Enter the channel name" required>
+                    <input type="text" id="channelName" placeholder="Enter the YouTube channel name to analyze" required>
                 </div>
                 
-                <button type="submit">Analyze Channel</button>
+                <button type="submit" class="form-btn" id="analyzeBtn">Analyze Channel</button>
             </form>
         </div>
 
+        <!-- Loading Slideshow -->
         <div class="loading" id="loadingIndicator">
-            <div class="spinner"></div>
-            <p>Analyzing YouTube search results. This may take a minute...</p>
+            <div class="loading-slideshow">
+                <div class="loading-slide active" id="slide1">
+                    <div class="spinner"></div>
+                    <div class="slide-content">
+                        <div class="slide-title">Analyzing Channel Content</div>
+                        <div class="slide-text">We're scanning the channel for potential copyright matches. This may take a few minutes.</div>
+                    </div>
+                </div>
+                <div class="loading-slide" id="slide2">
+                    <div class="spinner"></div>
+                    <div class="slide-content">
+                        <div class="slide-title">Processing Video Metadata</div>
+                        <div class="slide-text">We're analyzing video titles, descriptions, and metadata to identify potential violations.</div>
+                    </div>
+                </div>
+                <div class="loading-slide" id="slide3">
+                    <div class="spinner"></div>
+                    <div class="slide-content">
+                        <div class="slide-title">Checking for Content Matches</div>
+                        <div class="slide-text">We're comparing the channel content with your original video to find matches.</div>
+                    </div>
+                </div>
+                <div class="loading-slide" id="slide4">
+                    <div class="spinner"></div>
+                    <div class="slide-content">
+                        <div class="slide-title">Almost Done!</div>
+                        <div class="slide-text">We're finalizing the analysis and preparing your results. Please don't close this window.</div>
+                    </div>
+                </div>
+                <div class="slide-indicators">
+                    <div class="slide-indicator active" data-slide="1"></div>
+                    <div class="slide-indicator" data-slide="2"></div>
+                    <div class="slide-indicator" data-slide="3"></div>
+                    <div class="slide-indicator" data-slide="4"></div>
+                </div>
+            </div>
+            <p style="margin-top: 20px;">Do not reload or close browser app. <br> Analyzing hundreds of videos and contents on YouTube this might take about 3 minutes.</p>
         </div>
 
         <div class="results-container" id="resultsContainer">
-            <div class="card">
+            <div class="form-card">
                 <h2>Analysis Results</h2>
                 <p>Based on the top YouTube search results for channel: <span id="queryDisplay"></span></p>
                 
                 <div id="resultsSummary" class="summary">
                     <h3>Summary</h3>
-                    <p id="summaryText"></p>
+                    <p style="font-weight: 800 !important; color: #c62828 !important;" id="summaryText"></p>
                 </div>
                 
                 <div class="high-risk-section">
                     <h3>High Risk Videos</h3>
                     <div id="highRiskVideos"></div>
+                </div>
+                
+                <!-- Subscription Prompt (hidden by default) -->
+                <div class="subscription-prompt" id="subscriptionPrompt" style="display: none;">
+                    <h4>Upgrade to Premium</h4>
+                    <p>You're viewing a limited preview of the results. Upgrade to our Premium plan to see all potential copyright violations and unlock unlimited analysis.</p>
+                    <button class="paystack-btn" id="paystackBtn">Subscribe Now - ₦5,000/month</button>
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="form-btn new-analysis-btn" id="newAnalysisBtn">New Analysis</button>
                 </div>
             </div>
         </div>
@@ -334,144 +654,502 @@
 
     <div class="copy-notification" id="copyNotification">Link copied to clipboard!</div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('analysisForm');
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            const resultsContainer = document.getElementById('resultsContainer');
-            const errorMessage = document.getElementById('errorMessage');
-            const queryDisplay = document.getElementById('queryDisplay');
-            const summaryText = document.getElementById('summaryText');
-            const highRiskVideos = document.getElementById('highRiskVideos');
-            const copyNotification = document.getElementById('copyNotification');
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhlC-1LJYn4De0fL3iJhwtDWRzDpCwXaY",
+            authDomain: "vouchcard-46e48.firebaseapp.com",
+            databaseURL: "https://vouchcard-46e48-default-rtdb.firebaseio.com",
+            projectId: "vouchcard-46e48",
+            storageBucket: "vouchcard-46e48.firebasestorage.app",
+            messagingSenderId: "951045666666",
+            appId: "1:951045666666:web:35a4808d943ae311565713",
+            measurementId: "G-0PDX1RFQ02"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // Global variables
+        let currentUser = null;
+        let analysisResults = null;
+        let slideInterval = null;
+        let currentSlide = 1;
+        const totalSlides = 4;
+
+        // Check authentication state
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                // User is not signed in, redirect to signin page
+                window.location.href = 'signin.html';
+            } else {
+                currentUser = user;
+                
+                // Update user icon with first letter of email
+                const userIcon = document.getElementById('userIcon');
+                const firstLetter = user.email ? user.email.charAt(0).toUpperCase() : 'U';
+                userIcon.textContent = firstLetter;
+            }
+        });
+
+        // Handle track form submission
+        document.getElementById('trackForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
+            // Get form values
+            const trackName = document.getElementById('trackName').value;
+            const userName = document.getElementById('userName').value;
+            const channelName = document.getElementById('channelName').value;
+            
+            // Validate inputs
+            if (!trackName || !userName || !channelName) {
+                showError('Please fill in all fields');
+                return;
+            }
+            
+            // Hide any previous errors and results
+            hideError();
+            hideSuccess();
+            
+            // Hide form and show loading
+            document.getElementById('formCard').style.display = 'none';
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('loadingIndicator').classList.add('visible');
+            document.getElementById('analyzeBtn').disabled = true;
+            
+            // Start the loading slideshow
+            startLoadingSlideshow();
+            
+            try {
+                // Send request to backend (using the same API as index.html)
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userName, channelName })
+                });
                 
-                // Get form values
-                const userName = document.getElementById('userName').value;
-                const channelName = document.getElementById('channelName').value;
+                // Get response as text first to handle potential JSON parsing issues
+                const responseText = await response.text();
                 
-                // Validate inputs
-                if (!userName || !channelName) {
-                    showError('Please fill in all fields');
-                    return;
+                if (!response.ok) {
+                    // Try to parse as JSON for structured error, fallback to text
+                    let errorMessage = 'Something went wrong';
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        errorMessage = errorData.error || errorMessage;
+                    } catch (e) {
+                        errorMessage = responseText || errorMessage;
+                    }
+                    throw new Error(errorMessage);
                 }
                 
-                // Hide any previous errors and results
-                hideError();
-                resultsContainer.style.display = 'none';
-                
-                // Show loading indicator
-                loadingIndicator.style.display = 'block';
-                
+                // Try to parse the successful response as JSON
+                let data;
                 try {
-                    // Send request to backend
-                    const response = await fetch('/analyze', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ userName, channelName })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (!response.ok) {
-                        throw new Error(data.error || 'Something went wrong');
-                    }
-                    
-                    // Display the results
-                    displayResults(data);
-                    
-                } catch (error) {
-                    showError('An error occurred during analysis: ' + error.message);
-                } finally {
-                    loadingIndicator.style.display = 'none';
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('JSON parsing error:', parseError, 'Response:', responseText);
+                    throw new Error('Invalid response format from server. Please try again.');
+                }
+                
+                // Store the results for saving later
+                analysisResults = {
+                    trackName,
+                    userName,
+                    channelName,
+                    analysis: data.analysis,
+                    query: data.query,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Auto-save the track to database
+                await saveTrackToDatabase();
+                
+                // Stop the loading slideshow
+                stopLoadingSlideshow();
+                
+                // Display the results
+                await displayResults(data);
+                
+                // Hide loading and show results
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('loadingIndicator').classList.remove('visible');
+                document.getElementById('resultsContainer').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('resultsContainer').classList.add('visible');
+                }, 10);
+                
+            } catch (error) {
+                // Stop the loading slideshow
+                stopLoadingSlideshow();
+                
+                showError('An error occurred during analysis: ' + error.message);
+                // Show form again in case of error
+                document.getElementById('formCard').style.display = 'block';
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('loadingIndicator').classList.remove('visible');
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        });
+        
+        // Auto-save track to database
+        async function saveTrackToDatabase() {
+            if (!analysisResults || !currentUser) {
+                throw new Error('No analysis results to save');
+            }
+            
+            try {
+                const trackId = database.ref().child('tracks').push().key;
+                await database.ref('users/' + currentUser.uid + '/tracks/' + trackId).set(analysisResults);
+                showSuccess('Analysis completed and saved successfully!');
+            } catch (error) {
+                console.error('Error saving track:', error);
+                throw new Error('Error saving track. Please try again.');
+            }
+        }
+        
+        // Handle new analysis button
+        document.getElementById('newAnalysisBtn').addEventListener('click', function() {
+            // Hide results and show form again
+            window.location.href = 'newtrack.html';
+            document.getElementById('resultsContainer').classList.remove('visible');
+            setTimeout(() => {
+                document.getElementById('resultsContainer').style.display = 'none';
+                document.getElementById('formCard').style.display = 'block';
+            }, 300);
+            
+            // Clear any messages
+            hideError();
+            hideSuccess();
+        });
+        
+        // Check user subscription status
+        async function checkUserSubscription() {
+            if (!currentUser) return false;
+            
+            try {
+                const snapshot = await database.ref('users/' + currentUser.uid + '/subscription').once('value');
+                const subscription = snapshot.val();
+                
+                if (!subscription) return false;
+                
+                // Check if subscription is still valid (within one month)
+                const subscriptionDate = new Date(subscription.purchasedAt);
+                const oneMonthLater = new Date(subscriptionDate);
+                oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+                
+                return new Date() < oneMonthLater;
+            } catch (error) {
+                console.error('Error checking subscription:', error);
+                return false;
+            }
+        }
+        
+        // Paystack payment handler
+        document.getElementById('paystackBtn').addEventListener('click', function() {
+            const handler = PaystackPop.setup({
+                key: 'pk_test_your_paystack_public_key', // Replace with your Paystack public key
+                email: currentUser.email,
+                amount: 500000, // 5000 Naira in kobo
+                currency: 'NGN',
+                ref: 'OFEK-' + Math.floor((Math.random() * 1000000000) + 1),
+                callback: function(response) {
+                    // Payment successful
+                    handleSuccessfulPayment(response.reference);
+                },
+                onClose: function() {
+                    // User closed the payment modal
+                    showError('Payment was cancelled');
                 }
             });
+            handler.openIframe();
+        });
+        
+        // Handle successful payment
+        async function handleSuccessfulPayment(reference) {
+            try {
+                // Update user subscription in database
+                await database.ref('users/' + currentUser.uid + '/subscription').set({
+                    plan: 'premium',
+                    purchasedAt: new Date().toISOString(),
+                    reference: reference,
+                    expiresAt: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString()
+                });
+                
+                showSuccess('Payment successful! You now have unlimited access for one month.');
+                
+                // Hide subscription prompt and show full results
+                document.getElementById('subscriptionPrompt').style.display = 'none';
+                displayFullResults();
+            } catch (error) {
+                console.error('Error updating subscription:', error);
+                showError('Payment successful but there was an error updating your subscription. Please contact support.');
+            }
+        }
+        
+        async function displayResults(results) {
+            // Update query display
+            document.getElementById('queryDisplay').textContent = results.query;
             
-            function displayResults(results) {
-                // Update query display
-                queryDisplay.textContent = results.query;
+            // Update summary
+            document.getElementById('summaryText').textContent = results.analysis.summary;
+            
+            // Check user subscription status
+            const hasActiveSubscription = await checkUserSubscription();
+            
+            // Display high-risk videos
+            const highRiskVideos = document.getElementById('highRiskVideos');
+            highRiskVideos.innerHTML = '';
+            
+            const highRiskVideosList = results.analysis.ranked_list.filter(video => 
+                video.risk === 'High'
+            );
+            
+            if (highRiskVideosList.length === 0) {
+                highRiskVideos.innerHTML = '<p>No high-risk videos found.</p>';
+            } else {
+                // If user doesn't have active subscription, limit to 5 videos
+                const videosToShow = hasActiveSubscription ? highRiskVideosList : highRiskVideosList.slice(0, 5);
                 
-                // Update summary
-                summaryText.textContent = results.analysis.summary;
-                
-                // Display high-risk videos only
-                highRiskVideos.innerHTML = '';
-                
-                const highRiskVideosList = results.analysis.ranked_list.filter(video => 
-                    video.risk === 'High' || 'Medium'
-                );
-                
-                if (highRiskVideosList.length === 0) {
-                    highRiskVideos.innerHTML = '<p>No high-risk videos found.</p>';
-                } else {
-                    highRiskVideosList.forEach(video => {
-                        const videoUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
-                        
-                        const videoElement = document.createElement('div');
-                        videoElement.className = 'video-item';
-                        videoElement.innerHTML = `
-                            <div class="video-thumbnail">
-                                <img src="https://i.ytimg.com/vi/${video.videoId}/default.jpg" alt="${video.title}">
-                            </div>
-                            <div class="video-info">
-                                <div class="video-title">${video.title}</div>
-                                <div class="channel-name">Channel: ${video.channelTitle}</div>
-                                <div class="publish-date">Published: ${new Date(video.publishedAt).toLocaleDateString()}</div>
-                                <div class="rationale">
-                                    <strong>Rationale:</strong>
-                                    <ul>
-                                        ${video.rationale.map(point => `<li>${point}</li>`).join('')}
-                                    </ul>
-                                </div>
-                                <div class="video-link-container">
-                                    <input type="text" class="video-link" value="${videoUrl}" readonly>
-                                    <button class="copy-btn" data-url="${videoUrl}">Copy Link</button>
-                                </div>
-                            </div>
-                        `;
-                        
-                        highRiskVideos.appendChild(videoElement);
-                    });
+                videosToShow.forEach(video => {
+                    const videoUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
                     
-                    // Add event listeners to copy buttons
-                    document.querySelectorAll('.copy-btn').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const url = this.getAttribute('data-url');
-                            copyToClipboard(url);
-                            
-                            // Show notification
-                            copyNotification.style.display = 'block';
-                            setTimeout(() => {
-                                copyNotification.style.display = 'none';
-                            }, 2000);
-                        });
-                    });
+                    const videoElement = document.createElement('div');
+                    videoElement.className = 'video-item';
+                    console.log(video)
+                    videoElement.innerHTML = `
+                        <div class="video-thumbnail">
+                            <img src="https://i.ytimg.com/vi/${video.videoId}/default.jpg" alt="${video.title}">
+                        </div>
+                        <div class="video-info">
+                            <div class="video-title">${video.title}</div>
+                            <div class="channel-name">${([video.channelTitle, video.channel,  video.channelName].filter(v => v != null && v !== '').join(' ') || '') ? 'Channel: ' + [video.channelTitle, video.channel].filter(v => v != null && v !== '').join(' ') : ''}</div>
+                            <div class="publish-date">Published: ${new Date(video.publishedAt).toLocaleDateString()}</div>
+                            <div class="rationale">
+                                <strong>Rationale:</strong>
+                                <ul>
+                                    ${video.rationale.map(point => `<li>${point}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="video-link-container">
+                                <input type="text" class="video-link" value="${videoUrl}" readonly>
+                                <button class="copy-btn" data-url="${videoUrl}">Copy Link</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    highRiskVideos.appendChild(videoElement);
+                });
+                
+                // Show subscription prompt if user doesn't have active subscription and there are more than 5 videos
+                if (!hasActiveSubscription && highRiskVideosList.length > 5) {
+                    document.getElementById('subscriptionPrompt').style.display = 'block';
                 }
                 
-                // Show results container
-                resultsContainer.style.display = 'block';
+                // Add event listeners to copy buttons
+                document.querySelectorAll('.copy-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const url = this.getAttribute('data-url');
+                        copyToClipboard(url);
+                        
+                        // Show notification
+                        const copyNotification = document.getElementById('copyNotification');
+                        copyNotification.style.display = 'block';
+                        setTimeout(() => {
+                            copyNotification.style.display = 'none';
+                        }, 2000);
+                    });
+                });
+            }
+        }
+        
+        // Display full results after subscription
+        function displayFullResults() {
+            const highRiskVideos = document.getElementById('highRiskVideos');
+            highRiskVideos.innerHTML = '';
+            
+            const highRiskVideosList = analysisResults.analysis.ranked_list.filter(video => 
+                video.risk === 'High'
+            );
+            
+            highRiskVideosList.forEach(video => {
+                const videoUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
+                
+                const videoElement = document.createElement('div');
+                videoElement.className = 'video-item';
+                videoElement.innerHTML = `
+                    <div class="video-thumbnail">
+                        <img src="https://i.ytimg.com/vi/${video.videoId}/default.jpg" alt="${video.title}">
+                    </div>
+                    <div class="video-info">
+                        <div class="video-title">${video.title}</div>
+                        <div class="channel-name">${([video.channelTitle, video.channel,  video.channelName].filter(v => v != null && v !== '').join(' ') || '') ? 'Channel: ' + [video.channelTitle, video.channel].filter(v => v != null && v !== '').join(' ') : ''}</div>
+                        <div class="publish-date">Published: ${new Date(video.publishedAt).toLocaleDateString()}</div>
+                        <div class="rationale">
+                            <strong>Rationale:</strong>
+                            <ul>
+                                ${video.rationale.map(point => `<li>${point}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="video-link-container">
+                            <input type="text" class="video-link" value="${videoUrl}" readonly>
+                            <button class="copy-btn" data-url="${videoUrl}">Copy Link</button>
+                        </div>
+                    </div>
+                `;
+                
+                highRiskVideos.appendChild(videoElement);
+            });
+            
+            // Add event listeners to copy buttons
+            document.querySelectorAll('.copy-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    copyToClipboard(url);
+                    
+                    // Show notification
+                    const copyNotification = document.getElementById('copyNotification');
+                    copyNotification.style.display = 'block';
+                    setTimeout(() => {
+                        copyNotification.style.display = 'none';
+                    }, 2000);
+                });
+            });
+        }
+        
+        // Loading slideshow functions
+        function startLoadingSlideshow() {
+            currentSlide = 1;
+            updateSlideshow();
+            
+            slideInterval = setInterval(() => {
+                currentSlide = currentSlide < totalSlides ? currentSlide + 1 : 1;
+                updateSlideshow();
+            }, 5000); // Change slide every 5 seconds
+        }
+        
+        function stopLoadingSlideshow() {
+            if (slideInterval) {
+                clearInterval(slideInterval);
+                slideInterval = null;
+            }
+        }
+        
+        function updateSlideshow() {
+            // Hide all slides
+            for (let i = 1; i <= totalSlides; i++) {
+                document.getElementById(`slide${i}`).classList.remove('active');
+                document.querySelector(`.slide-indicator[data-slide="${i}"]`).classList.remove('active');
             }
             
-            function copyToClipboard(text) {
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-            }
+            // Show current slide
+            document.getElementById(`slide${currentSlide}`).classList.add('active');
+            document.querySelector(`.slide-indicator[data-slide="${currentSlide}"]`).classList.add('active');
+        }
+        
+        // Add click handlers for slide indicators
+        document.querySelectorAll('.slide-indicator').forEach(indicator => {
+            indicator.addEventListener('click', function() {
+                currentSlide = parseInt(this.getAttribute('data-slide'));
+                updateSlideshow();
+                
+                // Reset the interval
+                if (slideInterval) {
+                    clearInterval(slideInterval);
+                    slideInterval = setInterval(() => {
+                        currentSlide = currentSlide < totalSlides ? currentSlide + 1 : 1;
+                        updateSlideshow();
+                    }, 5000);
+                }
+            });
+        });
+        
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+        
+        function showSuccess(message) {
+            const successElement = document.getElementById('successMessage');
+            successElement.textContent = message;
+            successElement.style.display = 'block';
             
-            function showError(message) {
-                errorMessage.textContent = message;
-                errorMessage.style.display = 'block';
+            // Hide after 5 seconds
+            setTimeout(() => {
+                successElement.style.display = 'none';
+            }, 5000);
+        }
+        
+        function hideSuccess() {
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            auth.signOut()
+                .then(() => {
+                    window.location.href = 'signin.html';
+                })
+                .catch((error) => {
+                    console.error('Error signing out:', error);
+                });
+        });
+
+        // Mobile sidebar functionality
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        const closeSidebarBtn = document.getElementById('closeSidebar');
+        const overlay = document.getElementById('overlay');
+        
+        function openSidebar() {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling when sidebar is open
+        }
+        
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = ''; // Re-enable scrolling
+        }
+        
+        menuToggle.addEventListener('click', openSidebar);
+        closeSidebarBtn.addEventListener('click', closeSidebar);
+        overlay.addEventListener('click', closeSidebar);
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (event) => {
+            if (window.innerWidth <= 768 && 
+                sidebar.classList.contains('active') && 
+                !sidebar.contains(event.target) && 
+                !menuToggle.contains(event.target)) {
+                closeSidebar();
             }
-            
-            function hideError() {
-                errorMessage.style.display = 'none';
+        });
+        
+        // Close sidebar on escape key press
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && window.innerWidth <= 768) {
+                closeSidebar();
             }
         });
     </script>

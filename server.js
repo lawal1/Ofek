@@ -597,11 +597,32 @@ function combineAnalyses(analyses, totalVideos) {
   const totalLowRisk = allRankedLists.filter(item => item.risk === 'Low').length;
   
   const failedBatches = analyses.filter(a => a.batch_failed).length;
- const summary = `We found ${totalHighRisk + totalMediumRisk} Movies with Possible infringement. ${
+ const totalRisk = totalHighRisk + totalMediumRisk;
+let lossEstimate = '';
+
+if (totalRisk >= 1 && totalRisk <= 5) {
+  lossEstimate = '$500 - $1,000';
+} else if (totalRisk >= 6 && totalRisk <= 10) {
+  lossEstimate = '$1,000 - $5,000';
+} else if (totalRisk >= 11 && totalRisk <= 15) {
+  lossEstimate = '$5,000 - $10,000';
+} else if (totalRisk >= 16 && totalRisk <= 20) {
+  lossEstimate = '$10,000 - $25,000';
+} else if (totalRisk >= 21 && totalRisk <= 25) {
+  lossEstimate = '$25,000 - $50,000';
+} else if (totalRisk >= 26 && totalRisk <= 30) {
+  lossEstimate = '$50,000 - $100,000';
+} else if (totalRisk > 30) {
+  lossEstimate = '$100,000+';
+} else {
+  lossEstimate = '$0';
+}
+
+const summary = `We found ${totalRisk} Movies with Possible infringement. ${
   totalHighRisk > 0
     ? 'Immediate attention recommended for high-risk content.'
     : 'No immediate high-risk concerns detected.'
-}`;
+} Estimated potential loss: ${lossEstimate}.`;
 
   // Sort combined ranked list by risk priority (High > Medium > Low)
   const riskPriority = { High: 3, Medium: 2, Low: 1 };
