@@ -323,7 +323,7 @@ app.post('/analyze', async (req, res) => {
     let allSearchResults = [];
     let nextPageToken = null;
     let pageCount = 0;
-    const targetResults = 50;
+    const targetResults = 70;
     const maxResultsPerPage = 50; // YouTube API max per page
 
     try {
@@ -607,11 +607,11 @@ if (totalRisk >= 1 && totalRisk <= 5) {
 } else if (totalRisk >= 11 && totalRisk <= 15) {
   lossEstimate = '$5,000 - $10,000';
 } else if (totalRisk >= 16 && totalRisk <= 20) {
-  lossEstimate = '$10,000 - $25,000';
+  lossEstimate = '$10,000 - $15,000';
 } else if (totalRisk >= 21 && totalRisk <= 25) {
-  lossEstimate = '$25,000 - $50,000';
+  lossEstimate = '$15,000 - $20,000';
 } else if (totalRisk >= 26 && totalRisk <= 30) {
-  lossEstimate = '$50,000 - $100,000';
+  lossEstimate = '$30,000 - $50,000';
 } else if (totalRisk > 30) {
   lossEstimate = '$100,000+';
 } else {
