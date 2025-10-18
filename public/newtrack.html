@@ -641,7 +641,7 @@
                 <div class="subscription-prompt" id="subscriptionPrompt" style="display: none;">
                     <h4>Upgrade to Premium</h4>
                     <p>You're viewing a limited preview of the results. Upgrade to our Premium plan to see all potential copyright violations and unlock unlimited analysis.</p>
-                    <button class="paystack-btn" id="paystackBtn">Subscribe Now - ₦5,000/month</button>
+                    <button class="paystack-btn" id="paystackBtn">Subscribe Now - ₦15,000/month</button>
                 </div>
                 
                 <div style="display: flex; gap: 15px; margin-top: 20px;">
@@ -854,7 +854,7 @@
             const handler = PaystackPop.setup({
                 key: 'pk_test_b70700b96292b2c2211cf97bdb97638324623098', // Replace with your Paystack public key
                 email: currentUser.email,
-                amount: 500000, // 5000 Naira in kobo
+                amount: 1500000, // 5000 Naira in kobo
                 currency: 'NGN',
                 ref: 'OFEK-' + Math.floor((Math.random() * 1000000000) + 1),
                 callback: function(response) {
