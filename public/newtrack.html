@@ -10,7 +10,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- Paystack Inline -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <style>
+        /* Previous CSS styles remain the same */
         body {
             background-color: #fdf2f0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -202,18 +205,7 @@
             box-shadow: none;
         }
 
-        /* Results Styles */
-        .results-container {
-            display: none;
-            margin-top: 30px;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        .results-container.visible {
-            opacity: 1;
-        }
-
+        /* Loading Slideshow Styles */
         .loading {
             text-align: center;
             padding: 40px;
@@ -224,6 +216,64 @@
 
         .loading.visible {
             opacity: 1;
+        }
+
+        .loading-slideshow {
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            min-height: 200px;
+        }
+
+        .loading-slide {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .loading-slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .slide-indicators {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .slide-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ddd;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .slide-indicator.active {
+            background-color: #e55a3c;
+        }
+
+        .slide-content {
+            margin-bottom: 20px;
+        }
+
+        .slide-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e55a3c;
+            margin-bottom: 15px;
+        }
+
+        .slide-text {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.5;
         }
 
         .spinner {
@@ -239,6 +289,18 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        /* Results Styles */
+        .results-container {
+            display: none;
+            margin-top: 30px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .results-container.visible {
+            opacity: 1;
         }
 
         .summary {
@@ -386,6 +448,42 @@
             background-color: #3367d6;
         }
 
+        /* Subscription Styles */
+        .subscription-prompt {
+            background: #fff8e1;
+            border: 1px solid #ffd54f;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .subscription-prompt h4 {
+            color: #f57c00;
+            margin-bottom: 15px;
+        }
+
+        .subscription-prompt p {
+            margin-bottom: 15px;
+            color: #5d4037;
+        }
+
+        .paystack-btn {
+            background-color: #00b894;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .paystack-btn:hover {
+            background-color: #00a085;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -484,10 +582,45 @@
             </form>
         </div>
 
+        <!-- Loading Slideshow -->
         <div class="loading" id="loadingIndicator">
-            <div class="spinner"></div>
-            <p>Do not reload or close browser app. <br> Analyzing hundreds of videos and contents on youtube this might take about 3 minutes. </p>
-        </div>
+            <div class="loading-slideshow">
+                <div class="loading-slide active" id="slide1">
+                    <div class="spinner"></div>
+                    <div class="slide-content">
+                        <div class="slide-title">Analyzing Channel Content</div>
+                        <div class="slide-text">We're scanning the channel for potential copyright matches. This may take a few minutes.</div>
+                    </div>
+                </div>
+                <div class="loading-slide" id="slide2">
+                    <div class="spinner"></div>
+                    <div class="slide-content">
+                        <div class="slide-title">Processing Video Metadata</div>
+                        <div class="slide-text">We're analyzing video titles, descriptions, and metadata to identify potential violations.</div>
+                    </div>
+                </div>
+                <div class="loading-slide" id="slide3">
+                    <div class="spinner"></div>
+                    <div class="slide-content">
+                        <div class="slide-title">Checking for Content Matches</div>
+                        <div class="slide-text">We're comparing the channel content with your original video to find matches.</div>
+                    </div>
+                </div>
+                <div class="loading-slide" id="slide4">
+                    <div class="spinner"></div>
+                    <div class="slide-content">
+                        <div class="slide-title">Almost Done!</div>
+                        <div class="slide-text">We're finalizing the analysis and preparing your results. Please don't close this window.</div>
+                    </div>
+                </div>
+                <div class="slide-indicators">
+                    <div class="slide-indicator active" data-slide="1"></div>
+                    <div class="slide-indicator" data-slide="2"></div>
+                    <div class="slide-indicator" data-slide="3"></div>
+                    <div class="slide-indicator" data-slide="4"></div>
+                </div>
+            </div>
+           </div>
 
         <div class="results-container" id="resultsContainer">
             <div class="form-card">
@@ -504,8 +637,14 @@
                     <div id="highRiskVideos"></div>
                 </div>
                 
+                <!-- Subscription Prompt (hidden by default) -->
+                <div class="subscription-prompt" id="subscriptionPrompt" style="display: none;">
+                    <h4>Upgrade to Premium</h4>
+                    <p>You're viewing a limited preview of the results. Upgrade to our Premium plan to see all potential copyright violations and unlock unlimited analysis.</p>
+                    <button class="paystack-btn" id="paystackBtn">Subscribe Now - ₦5,000/month</button>
+                </div>
+                
                 <div style="display: flex; gap: 15px; margin-top: 20px;">
-                    <button class="form-btn" id="saveTrackBtn">Save Track</button>
                     <button class="form-btn new-analysis-btn" id="newAnalysisBtn">New Analysis</button>
                 </div>
             </div>
@@ -536,6 +675,9 @@
         // Global variables
         let currentUser = null;
         let analysisResults = null;
+        let slideInterval = null;
+        let currentSlide = 1;
+        const totalSlides = 4;
 
         // Check authentication state
         auth.onAuthStateChanged((user) => {
@@ -576,6 +718,9 @@
             document.getElementById('loadingIndicator').style.display = 'block';
             document.getElementById('loadingIndicator').classList.add('visible');
             document.getElementById('analyzeBtn').disabled = true;
+            
+            // Start the loading slideshow
+            startLoadingSlideshow();
             
             try {
                 // Send request to backend (using the same API as index.html)
@@ -621,8 +766,14 @@
                     timestamp: new Date().toISOString()
                 };
                 
+                // Auto-save the track to database
+                await saveTrackToDatabase();
+                
+                // Stop the loading slideshow
+                stopLoadingSlideshow();
+                
                 // Display the results
-                displayResults(data);
+                await displayResults(data);
                 
                 // Hide loading and show results
                 document.getElementById('loadingIndicator').style.display = 'none';
@@ -633,6 +784,9 @@
                 }, 10);
                 
             } catch (error) {
+                // Stop the loading slideshow
+                stopLoadingSlideshow();
+                
                 showError('An error occurred during analysis: ' + error.message);
                 // Show form again in case of error
                 document.getElementById('formCard').style.display = 'block';
@@ -642,46 +796,26 @@
             }
         });
         
-        // Handle save track button
-        document.getElementById('saveTrackBtn').addEventListener('click', function() {
+        // Auto-save track to database
+        async function saveTrackToDatabase() {
             if (!analysisResults || !currentUser) {
-                showError('No analysis results to save');
-                return;
+                throw new Error('No analysis results to save');
             }
             
-            const saveBtn = document.getElementById('saveTrackBtn');
-            saveBtn.disabled = true;
-            saveBtn.textContent = 'Saving...';
-            
-            // Save track to database
-            const trackId = database.ref().child('tracks').push().key;
-            
-            database.ref('users/' + currentUser.uid + '/tracks/' + trackId).set(analysisResults)
-                .then(() => {
-                    showSuccess('Track saved successfully!');
-                    // Reset form
-                    document.getElementById('trackForm').reset();
-                    analysisResults = null;
-                    
-                    // After saving, show the option to do a new analysis
-                    setTimeout(() => {
-                        document.getElementById('saveTrackBtn').disabled = false;
-                        document.getElementById('saveTrackBtn').textContent = 'Save Track';
-                    }, 2000);
-                })
-                .catch((error) => {
-                    console.error('Error saving track:', error);
-                    showError('Error saving track. Please try again.');
-                    document.getElementById('saveTrackBtn').disabled = false;
-                    document.getElementById('saveTrackBtn').textContent = 'Save Track';
-                });
-        });
+            try {
+                const trackId = database.ref().child('tracks').push().key;
+                await database.ref('users/' + currentUser.uid + '/tracks/' + trackId).set(analysisResults);
+                showSuccess('Analysis completed and saved successfully!');
+            } catch (error) {
+                console.error('Error saving track:', error);
+                throw new Error('Error saving track. Please try again.');
+            }
+        }
         
         // Handle new analysis button
         document.getElementById('newAnalysisBtn').addEventListener('click', function() {
             // Hide results and show form again
-
-             window.location.href = 'newtrack.html';
+            window.location.href = 'newtrack.html';
             document.getElementById('resultsContainer').classList.remove('visible');
             setTimeout(() => {
                 document.getElementById('resultsContainer').style.display = 'none';
@@ -693,14 +827,81 @@
             hideSuccess();
         });
         
-        function displayResults(results) {
+        // Check user subscription status
+        async function checkUserSubscription() {
+            if (!currentUser) return false;
+            
+            try {
+                const snapshot = await database.ref('users/' + currentUser.uid + '/subscription').once('value');
+                const subscription = snapshot.val();
+                
+                if (!subscription) return false;
+                
+                // Check if subscription is still valid (within one month)
+                const subscriptionDate = new Date(subscription.purchasedAt);
+                const oneMonthLater = new Date(subscriptionDate);
+                oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+                
+                return new Date() < oneMonthLater;
+            } catch (error) {
+                console.error('Error checking subscription:', error);
+                return false;
+            }
+        }
+        
+        // Paystack payment handler
+        document.getElementById('paystackBtn').addEventListener('click', function() {
+            const handler = PaystackPop.setup({
+                key: 'pk_test_b70700b96292b2c2211cf97bdb97638324623098', // Replace with your Paystack public key
+                email: currentUser.email,
+                amount: 500000, // 5000 Naira in kobo
+                currency: 'NGN',
+                ref: 'OFEK-' + Math.floor((Math.random() * 1000000000) + 1),
+                callback: function(response) {
+                    // Payment successful
+                    handleSuccessfulPayment(response.reference);
+                },
+                onClose: function() {
+                    // User closed the payment modal
+                    showError('Payment was cancelled');
+                }
+            });
+            handler.openIframe();
+        });
+        
+        // Handle successful payment
+        async function handleSuccessfulPayment(reference) {
+            try {
+                // Update user subscription in database
+                await database.ref('users/' + currentUser.uid + '/subscription').set({
+                    plan: 'premium',
+                    purchasedAt: new Date().toISOString(),
+                    reference: reference,
+                    expiresAt: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString()
+                });
+                
+                showSuccess('Payment successful! You now have unlimited access for one month.');
+                
+                // Hide subscription prompt and show full results
+                document.getElementById('subscriptionPrompt').style.display = 'none';
+                displayFullResults();
+            } catch (error) {
+                console.error('Error updating subscription:', error);
+                showError('Payment successful but there was an error updating your subscription. Please contact support.');
+            }
+        }
+        
+        async function displayResults(results) {
             // Update query display
             document.getElementById('queryDisplay').textContent = results.query;
             
             // Update summary
             document.getElementById('summaryText').textContent = results.analysis.summary;
             
-            // Display high-risk videos only
+            // Check user subscription status
+            const hasActiveSubscription = await checkUserSubscription();
+            
+            // Display high-risk videos
             const highRiskVideos = document.getElementById('highRiskVideos');
             highRiskVideos.innerHTML = '';
             
@@ -711,7 +912,10 @@
             if (highRiskVideosList.length === 0) {
                 highRiskVideos.innerHTML = '<p>No high-risk videos found.</p>';
             } else {
-                highRiskVideosList.forEach(video => {
+                // If user doesn't have active subscription, limit to 5 videos
+                const videosToShow = hasActiveSubscription ? highRiskVideosList : highRiskVideosList.slice(0, 5);
+                
+                videosToShow.forEach(video => {
                     const videoUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
                     
                     const videoElement = document.createElement('div');
@@ -741,6 +945,11 @@
                     highRiskVideos.appendChild(videoElement);
                 });
                 
+                // Show subscription prompt if user doesn't have active subscription and there are more than 5 videos
+                if (!hasActiveSubscription && highRiskVideosList.length > 5) {
+                    document.getElementById('subscriptionPrompt').style.display = 'block';
+                }
+                
                 // Add event listeners to copy buttons
                 document.querySelectorAll('.copy-btn').forEach(button => {
                     button.addEventListener('click', function() {
@@ -757,6 +966,107 @@
                 });
             }
         }
+        
+        // Display full results after subscription
+        function displayFullResults() {
+            const highRiskVideos = document.getElementById('highRiskVideos');
+            highRiskVideos.innerHTML = '';
+            
+            const highRiskVideosList = analysisResults.analysis.ranked_list.filter(video => 
+                video.risk === 'High'
+            );
+            
+            highRiskVideosList.forEach(video => {
+                const videoUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
+                
+                const videoElement = document.createElement('div');
+                videoElement.className = 'video-item';
+                videoElement.innerHTML = `
+                    <div class="video-thumbnail">
+                        <img src="https://i.ytimg.com/vi/${video.videoId}/default.jpg" alt="${video.title}">
+                    </div>
+                    <div class="video-info">
+                        <div class="video-title">${video.title}</div>
+                        <div class="channel-name">${([video.channelTitle, video.channel,  video.channelName].filter(v => v != null && v !== '').join(' ') || '') ? 'Channel: ' + [video.channelTitle, video.channel].filter(v => v != null && v !== '').join(' ') : ''}</div>
+                        <div class="publish-date">Published: ${new Date(video.publishedAt).toLocaleDateString()}</div>
+                        <div class="rationale">
+                            <strong>Rationale:</strong>
+                            <ul>
+                                ${video.rationale.map(point => `<li>${point}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="video-link-container">
+                            <input type="text" class="video-link" value="${videoUrl}" readonly>
+                            <button class="copy-btn" data-url="${videoUrl}">Copy Link</button>
+                        </div>
+                    </div>
+                `;
+                
+                highRiskVideos.appendChild(videoElement);
+            });
+            
+            // Add event listeners to copy buttons
+            document.querySelectorAll('.copy-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    copyToClipboard(url);
+                    
+                    // Show notification
+                    const copyNotification = document.getElementById('copyNotification');
+                    copyNotification.style.display = 'block';
+                    setTimeout(() => {
+                        copyNotification.style.display = 'none';
+                    }, 2000);
+                });
+            });
+        }
+        
+        // Loading slideshow functions
+        function startLoadingSlideshow() {
+            currentSlide = 1;
+            updateSlideshow();
+            
+            slideInterval = setInterval(() => {
+                currentSlide = currentSlide < totalSlides ? currentSlide + 1 : 1;
+                updateSlideshow();
+            }, 5000); // Change slide every 5 seconds
+        }
+        
+        function stopLoadingSlideshow() {
+            if (slideInterval) {
+                clearInterval(slideInterval);
+                slideInterval = null;
+            }
+        }
+        
+        function updateSlideshow() {
+            // Hide all slides
+            for (let i = 1; i <= totalSlides; i++) {
+                document.getElementById(`slide${i}`).classList.remove('active');
+                document.querySelector(`.slide-indicator[data-slide="${i}"]`).classList.remove('active');
+            }
+            
+            // Show current slide
+            document.getElementById(`slide${currentSlide}`).classList.add('active');
+            document.querySelector(`.slide-indicator[data-slide="${currentSlide}"]`).classList.add('active');
+        }
+        
+        // Add click handlers for slide indicators
+        document.querySelectorAll('.slide-indicator').forEach(indicator => {
+            indicator.addEventListener('click', function() {
+                currentSlide = parseInt(this.getAttribute('data-slide'));
+                updateSlideshow();
+                
+                // Reset the interval
+                if (slideInterval) {
+                    clearInterval(slideInterval);
+                    slideInterval = setInterval(() => {
+                        currentSlide = currentSlide < totalSlides ? currentSlide + 1 : 1;
+                        updateSlideshow();
+                    }, 5000);
+                }
+            });
+        });
         
         function copyToClipboard(text) {
             const textarea = document.createElement('textarea');
