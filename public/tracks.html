@@ -13,6 +13,7 @@
     <!-- Paystack Inline -->
     <script src="https://js.paystack.co/v1/inline.js"></script>
     <style>
+
         body {
             background-color: #fdf2f0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -545,6 +546,24 @@
                 align-self: center;
             }
         }
+        
+        @media (max-width: 768px) {
+    .video-link-container {
+        flex-wrap: wrap;
+    }
+    
+    .video-link {
+        min-width: 0;
+        flex: 1 1 60%;
+    }
+    
+    .copy-btn {
+        flex: 0 0 auto;
+        margin-left: 8px;
+        min-width: 70px;
+    }
+}
+
     </style>
 </head>
 <body>
