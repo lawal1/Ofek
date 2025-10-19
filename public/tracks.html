@@ -716,7 +716,7 @@
         // Paystack payment handler
         document.getElementById('paystackBtn').addEventListener('click', function() {
             const handler = PaystackPop.setup({
-                key: 'pk_test_your_paystack_public_key', // Replace with your Paystack public key
+                key: 'pk_live_b9ae4ce63585a1ab3c30ff16298b163b86f70e40', // Replace with your Paystack public key
                 email: currentUser.email,
                 amount: 500000, // 5000 Naira in kobo
                 currency: 'NGN',
@@ -954,7 +954,7 @@
                             // Add event listener to modal subscription button
                             document.getElementById('modalPaystackBtn').addEventListener('click', function() {
                                 const handler = PaystackPop.setup({
-                                    key: 'pk_test_your_paystack_public_key',
+                                    key: 'pk_live_b9ae4ce63585a1ab3c30ff16298b163b86f70e40',
                                     email: currentUser.email,
                                     amount: 500000,
                                     currency: 'NGN',
