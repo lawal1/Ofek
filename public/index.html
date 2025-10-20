@@ -79,6 +79,51 @@
       font-size: 1.2rem;
     }
 
+    /* Video Section */
+    .video-section {
+      padding: 5rem 2rem;
+      text-align: center;
+      background-color: #f8f4f0; /* Light background to match the theme */
+    }
+
+    .video-section h2 {
+      font-size: 3rem;
+      margin-bottom: 3rem;
+      color: #652612;
+    }
+
+    .video-container {
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(101, 38, 18, 0.2);
+    }
+
+    .video-wrapper {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+      height: 0;
+    }
+
+    .video-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .video-description {
+      max-width: 800px;
+      margin: 2rem auto 0;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: #333;
+    }
+
     /* How It Works Section */
     .how-it-works {
       padding: 5rem 2rem;
@@ -177,6 +222,11 @@
       .hero p {
         font-size: 1rem;
       }
+      
+      .video-section h2,
+      .how-it-works h2 {
+        font-size: 2.2rem;
+      }
     }
     .ere{
         color: #000;
@@ -203,14 +253,32 @@
     </div>
   </section>
 
+  <!-- Video Section -->
+  <section class="video-section">
+    <h2>How It Works</h2>
+    <div class="video-container">
+      <div class="video-wrapper">
+        <!-- Replace VIDEO_ID with your actual YouTube video ID -->
+        <iframe 
+          src="https://www.youtube.com/embed/SjQlTALK5aA?rel=0&modestbranding=1&color=white" 
+          title="How Our Music Protection Platform Works"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+    <p class="video-description">
+      Watch this short video to see how our AI-powered platform protects your creative work 24/7, 
+      ensuring you receive proper credit and revenue for your music.
+    </p>
+  </section>
+
   <!-- How It Works Section -->
   <section class="how-it-works">
-    <h2>How it works</h2>
+    <h2>Our Process</h2>
     <div class="process-container">
       <div style="border: 1px solid black; background-color: transparent !important; " class="process-step">
-        
         <h3 style="color: #e1d4c7 !important;">More <br>revenue <br></h3>
-        <!-- <p style="color: #e1d4c7 !important">Your song or video file</p> -->
       </div>
 
       <div class="process-step center">
@@ -220,9 +288,7 @@
       </div>
 
       <div style="border: 1px solid black; background-color: transparent !important; " class="process-step">
-        
         <h3 style="color: #e1d4c7 !important">Create it <br> keep it</h3>
-        
       </div>
     </div>
   </section>
